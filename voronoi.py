@@ -25,7 +25,7 @@ def xy_to_hsv(p: Point) -> Col:
     """returs the color with hue x and lightness y"""
     return scale(hsv_to_rgb(p[0], 1, p[1]))
 
-def r_angle_to_hsv(p: Point) -> Col:
+def polar_to_hsv(p: Point) -> Col:
     """returs the color with hue r and lightness angle"""
     r = ((p[0] - 0.5)**2 + (p[1] - 0.5)**2)**0.5
     angle = (atan2(p[1]-0.5, p[0]-0.5) % (2*pi))/(2*pi)
