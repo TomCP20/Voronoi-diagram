@@ -31,21 +31,22 @@ def polar_to_hsv(p: Point) -> Col:
     angle = (atan2(p[1]-0.5, p[0]-0.5) % (2*pi))/(2*pi)
     return scale(hsv_to_rgb(angle, 1, r))
 
-def gen_voronoi(res: int, n: int, col_func: Callable[[Point], Col], radius: int) -> Image.Image:
+def gen_voronoi(points: set[Point], res: int, col: Callable[[Point], Col], r: int) -> Image.Image:
     """Generates a Voronoi diagrams"""
-    points: set[Point] = {(random(), random()) for _ in range(n)}
-    cols: dict[Point, Col] = {p: col_func(p) for p in points}
+    cols: dict[Point, Col] = {p: col(p) for p in points}
     image = Image.new(mode="RGB", size=(res, res))
-    for (x, y) in product(range(res), range(res)):
+    for (x, y) in product(range(res), repeat=2):
         def dist_key(p1: Point) -> Callable[[Point], float]:
             return lambda p2 : (p1[0] - p2[0])**2 + (p1[1] - p2[1])**2
         image.putpixel((x, y), cols[min(points, key=dist_key((x/res, y/res)))])
 
-    if radius:
+    if r:
         draw = ImageDraw.Draw(image)
         for point in points:
-            draw.circle((int(point[0]*res), int(point[1]*res)), radius, fill=(0, 0, 0))
+            draw.circle((int(point[0]*res), int(point[1]*res)), r, fill=(0, 0, 0))
 
     return image
 
-gen_voronoi(512, 32, random_col, 4).show()
+ps = {(random(), random()) for _ in range(32)}
+for col_func in [random_col, xy_to_rg, xy_to_hsv, polar_to_hsv]:
+    gen_voronoi(ps, 512, col_func, 4).show()
