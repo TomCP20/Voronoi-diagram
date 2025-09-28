@@ -69,5 +69,6 @@ def main():
     for mapping in mappings:
         gen_voronoi(ps, 512, mapping, 4).show()
 
+
 if __name__ == "main":
     main()
