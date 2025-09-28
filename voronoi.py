@@ -61,8 +61,13 @@ def gen_voronoi(points: set[Point], res: int, mapping: Mapping, r: int) -> Image
     return image
 
 
-mappings: list[Mapping] = [random_col, xy_to_rg, xy_to_hsv, polar_to_hsv]
+def main():
+    """The main function"""
+    mappings: list[Mapping] = [random_col, xy_to_rg, xy_to_hsv, polar_to_hsv]
 
-ps = {(random(), random()) for _ in range(32)}
-for mapping in mappings:
-    gen_voronoi(ps, 512, mapping, 4).show()
+    ps = {(random(), random()) for _ in range(32)}
+    for mapping in mappings:
+        gen_voronoi(ps, 512, mapping, 4).show()
+
+if __name__ == "main":
+    main()
