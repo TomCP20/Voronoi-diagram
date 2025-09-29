@@ -6,6 +6,7 @@ from random import random, randrange
 from collections.abc import Callable
 from itertools import product
 from PIL import Image, ImageDraw
+from functools import partial
 
 type Point = tuple[float, float]
 """A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
@@ -13,6 +14,17 @@ type Col = tuple[int, int, int]
 """A colour (R, G, B) where 0 <= R, G, B <= 255"""
 type Mapping = Callable[[Point], Col]
 """A function that maps (X, Y) -> (R, G, B) """
+type Grid = list[list[int]]
+"""A grid of idexes for the closest point"""
+
+RES = 512
+POINT_COUNT = 32
+DOT_SIZE = 4
+
+
+def dist_sqr(p1: Point, p2: Point):
+    """Returns the distance squared between p1 and p2"""
+    return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
 
 
 def scale(c: tuple[float, float, float]) -> Col:
@@ -42,22 +54,23 @@ def polar_to_hsv(p: Point) -> Col:
     return scale(hsv_to_rgb(angle, 1, r))
 
 
-def gen_voronoi(points: set[Point], res: int, mapping: Mapping, r: int) -> Image.Image:
-    """Generates a Voronoi diagrams"""
-    cols: dict[Point, Col] = {p: mapping(p) for p in points}
-    image = Image.new(mode="RGB", size=(res, res))
-    for x, y in product(range(res), repeat=2):
+def cpi(points: list[Point], p: Point) -> int:
+    """returns the index of the point in points closest to p"""
+    return points.index(min(points, key=partial(dist_sqr, p)))
 
-        def dist_key(p1: Point) -> Callable[[Point], float]:
-            return lambda p2: (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
 
-        image.putpixel((x, y), cols[min(points, key=dist_key((x / res, y / res)))])
-
-    if r:
+def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
+    """Generates an image of The Voronoi diagram using the given color mapping"""
+    cols: dict[int, Col] = {points.index(p): mapping(p) for p in points}
+    image = Image.new(mode="RGB", size=(RES, RES))
+    for x, y in product(range(RES), repeat=2):
+        image.putpixel((x, y), cols[grid[y][x]])
+    if DOT_SIZE:
         draw = ImageDraw.Draw(image)
         for point in points:
-            draw.circle((int(point[0] * res), int(point[1] * res)), r, fill=(0, 0, 0))
-
+            draw.circle(
+                (int(point[0] * RES), int(point[1] * RES)), DOT_SIZE, fill=(0, 0, 0)
+            )
     return image
 
 
@@ -65,10 +78,11 @@ def main():
     """The main function"""
     mappings: list[Mapping] = [random_col, xy_to_rg, xy_to_hsv, polar_to_hsv]
 
-    ps = {(random(), random()) for _ in range(32)}
+    points = [(random(), random()) for _ in range(POINT_COUNT)]
+    grid = [[cpi(points, (x / RES, y / RES)) for x in range(RES)] for y in range(RES)]
     for mapping in mappings:
-        gen_voronoi(ps, 512, mapping, 4).show()
+        gen_image(points, grid, mapping).show()
 
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()
