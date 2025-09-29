@@ -9,7 +9,13 @@ from random import random, randrange
 
 from PIL import Image, ImageDraw
 
+RES = 512
+POINT_COUNT = 32
+DOT_SIZE = 4
+
 type Point = tuple[float, float]
+"""A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
+type Pixel = tuple[int, int]
 """A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
 type Col = tuple[int, int, int]
 """A colour (R, G, B) where 0 <= R, G, B <= 255"""
@@ -18,9 +24,15 @@ type Mapping = Callable[[Point], Col]
 type Grid = list[list[int]]
 """A grid of idexes for the closest point"""
 
-RES = 512
-POINT_COUNT = 32
-DOT_SIZE = 4
+
+def normalize(pixel: Pixel) -> Point:
+    """Normalizes a pixel into a point"""
+    return (pixel[0] / RES, pixel[1] / RES)
+
+
+def denormalize(point: Point) -> Pixel:
+    """Denormalizes a point into a pixel"""
+    return (int(point[0] * RES), int(point[1] * RES))
 
 
 def dist_sqr(p1: Point, p2: Point):
@@ -70,7 +82,7 @@ def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
         draw = ImageDraw.Draw(image)
         for point in points:
             draw.circle(
-                (int(point[0] * RES), int(point[1] * RES)), DOT_SIZE, fill=(0, 0, 0)
+                denormalize(point), DOT_SIZE, fill=(0, 0, 0)
             )
     return image
 
@@ -80,7 +92,7 @@ def main():
     mappings: list[Mapping] = [random_col, xy_to_rg, xy_to_hsv, polar_to_hsv]
 
     points = [(random(), random()) for _ in range(POINT_COUNT)]
-    grid = [[cpi(points, (x / RES, y / RES)) for x in range(RES)] for y in range(RES)]
+    grid = [[cpi(points, normalize((x, y))) for x in range(RES)] for y in range(RES)]
     for mapping in mappings:
         gen_image(points, grid, mapping).show()
 
