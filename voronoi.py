@@ -5,7 +5,7 @@ from colorsys import hsv_to_rgb
 from functools import partial
 from itertools import product
 from math import atan2, pi
-from random import random, randrange
+from random import random, randrange, seed
 
 from PIL import Image, ImageDraw
 
@@ -62,8 +62,9 @@ def xy_to_rg(p: Point) -> Col:
     return scale((p[0], p[1], 0))
 
 
-def random_col(_: Point) -> Col:
+def random_col(p: Point) -> Col:
     """returns a random color"""
+    seed(p[0] + p[1])
     return (randrange(256), randrange(256), randrange(256))
 
 
@@ -86,10 +87,9 @@ def cpi(points: list[Point], p: Point, m: Metric) -> int:
 
 def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
     """Generates an image of The Voronoi diagram using the given color mapping"""
-    cols: dict[int, Col] = {points.index(p): mapping(p) for p in points}
     image = Image.new(mode="RGB", size=(RES, RES))
     for x, y in product(range(RES), repeat=2):
-        image.putpixel((x, y), cols[grid[y][x]])
+        image.putpixel((x, y), mapping(points[grid[y][x]]))
     if DOT_SIZE:
         draw = ImageDraw.Draw(image)
         for point in points:
