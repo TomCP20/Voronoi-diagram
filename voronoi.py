@@ -12,8 +12,6 @@ from PIL import Image, ImageDraw
 RES = 512
 POINT_COUNT = 32
 DOT_SIZE = 2
-METRIC_SPACE = 0
-"""0 = Euclidean, 1 = Manhattan"""
 
 type Point = tuple[float, float]
 """A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
@@ -23,6 +21,8 @@ type Col = tuple[int, int, int]
 """A colour (R, G, B) where 0 <= R, G, B <= 255"""
 type Mapping = Callable[[Point], Col]
 """A function that maps (X, Y) -> (R, G, B) """
+type Metric = Callable[[Point, Point], float]
+"""A function that defines a metric space"""
 type Grid = list[list[int]]
 """A grid of idexes for the closest point"""
 
@@ -45,6 +45,11 @@ def dist_sqr(p1: Point, p2: Point) -> float:
 def man_dist(p1: Point, p2: Point) -> float:
     """Returns the manhattan distance between p1 and p2"""
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+
+def cheb_dist(p1: Point, p2: Point) -> float:
+    """Returns the chebyshev distance between p1 and p2"""
+    return max(abs(p1[0] - p2[0]), abs(p1[1] - p2[1]))
 
 
 def scale(c: tuple[float, float, float]) -> Col:
@@ -74,10 +79,9 @@ def polar_to_hsv(p: Point) -> Col:
     return scale(hsv_to_rgb(angle, 1, r))
 
 
-def cpi(points: list[Point], p: Point) -> int:
+def cpi(points: list[Point], p: Point, m: Metric) -> int:
     """returns the index of the point in points closest to p"""
-    metrics = [dist_sqr, man_dist]
-    return points.index(min(points, key=partial(metrics[METRIC_SPACE], p)))
+    return points.index(min(points, key=partial(m, p)))
 
 
 def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
@@ -95,12 +99,17 @@ def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
 
 def main():
     """The main function"""
+    metrics: list[Metric] = [dist_sqr, man_dist, cheb_dist]
     mappings: list[Mapping] = [random_col, xy_to_rg, xy_to_hsv, polar_to_hsv]
 
     points = [(random(), random()) for _ in range(POINT_COUNT)]
-    grid = [[cpi(points, normalize((x, y))) for x in range(RES)] for y in range(RES)]
-    for mapping in mappings:
-        gen_image(points, grid, mapping).show()
+    for metric in metrics:
+        grid = [
+            [cpi(points, normalize((x, y)), metric) for x in range(RES)]
+            for y in range(RES)
+        ]
+        for mapping in mappings:
+            gen_image(points, grid, mapping).show()
 
 
 if __name__ == "__main__":
