@@ -1,12 +1,13 @@
 """A python program that generates Voronoi diagrams"""
 
+from collections.abc import Callable
 from colorsys import hsv_to_rgb
+from functools import partial
+from itertools import product
 from math import atan2, pi
 from random import random, randrange
-from collections.abc import Callable
-from itertools import product
+
 from PIL import Image, ImageDraw
-from functools import partial
 
 type Point = tuple[float, float]
 """A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
