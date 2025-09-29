@@ -11,7 +11,9 @@ from PIL import Image, ImageDraw
 
 RES = 512
 POINT_COUNT = 32
-DOT_SIZE = 4
+DOT_SIZE = 2
+METRIC_SPACE = 0
+"""0 = Euclidean, 1 = Manhattan"""
 
 type Point = tuple[float, float]
 """A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
@@ -35,9 +37,14 @@ def denormalize(point: Point) -> Pixel:
     return (int(point[0] * RES), int(point[1] * RES))
 
 
-def dist_sqr(p1: Point, p2: Point):
+def dist_sqr(p1: Point, p2: Point) -> float:
     """Returns the distance squared between p1 and p2"""
     return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+
+
+def man_dist(p1: Point, p2: Point) -> float:
+    """Returns the manhattan distance between p1 and p2"""
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 
 def scale(c: tuple[float, float, float]) -> Col:
@@ -69,7 +76,7 @@ def polar_to_hsv(p: Point) -> Col:
 
 def cpi(points: list[Point], p: Point) -> int:
     """returns the index of the point in points closest to p"""
-    return points.index(min(points, key=partial(dist_sqr, p)))
+    return points.index(min(points, key=partial([dist_sqr, man_dist][METRIC_SPACE], p)))
 
 
 def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
@@ -81,9 +88,7 @@ def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
     if DOT_SIZE:
         draw = ImageDraw.Draw(image)
         for point in points:
-            draw.circle(
-                denormalize(point), DOT_SIZE, fill=(0, 0, 0)
-            )
+            draw.circle(denormalize(point), DOT_SIZE, fill=(0, 0, 0))
     return image
 
 
