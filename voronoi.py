@@ -76,7 +76,8 @@ def polar_to_hsv(p: Point) -> Col:
 
 def cpi(points: list[Point], p: Point) -> int:
     """returns the index of the point in points closest to p"""
-    return points.index(min(points, key=partial([dist_sqr, man_dist][METRIC_SPACE], p)))
+    metrics = [dist_sqr, man_dist]
+    return points.index(min(points, key=partial(metrics[METRIC_SPACE], p)))
 
 
 def gen_image(points: list[Point], grid: Grid, mapping: Mapping) -> Image.Image:
