@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw
 RES = 512
 POINT_COUNT = 32
 DOT_SIZE = 2
+SAVE = False
 
 type Point = tuple[float, float]
 """A point in 2d space (X, Y) where 0 <= X, Y <= 1"""
@@ -109,7 +110,10 @@ def main():
             for y in range(RES)
         ]
         for mapping in mappings:
-            gen_image(points, grid, mapping).show()
+            if SAVE:
+                gen_image(points, grid, mapping).save(f"{metric.__name__} {mapping.__name__}.png")
+            else:
+                gen_image(points, grid, mapping).show()
 
 
 if __name__ == "__main__":
